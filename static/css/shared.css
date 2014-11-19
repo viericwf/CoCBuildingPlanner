@@ -1,0 +1,87 @@
+/*=================================
+            SHARED STYLEs 
+===================================*/
+
+.main-block-wrap
+{
+  margin-top: 96px;
+}
+
+a
+{
+  /*color: inherit;*/
+  text-decoration: none!important;
+}
+
+a.navbar-brand
+{
+  color: white;
+}
+
+a:hover
+{
+  color: #cb3b28;
+}
+
+.hide 
+{
+  display: none;
+}
+
+
+#navbar-top
+{
+  background: #444;
+  /*position: relative;*/
+  position: fixed;
+
+}
+
+  #navbar-top li
+  {
+    color: #eee;
+    /*width: 96px;*/
+    text-align: center;    
+  }
+
+  #navbar-top li a
+  {
+    color: inherit;
+    background: inherit;
+  }
+
+  #navbar-top li.active
+  {
+    background: #111;
+    color: #fff;
+  }
+
+  #navbar-top li:hover
+  {
+    background: #333;
+  }  
+
+  /* dropdown settings */
+  #navbar-top ul.dropdown-menu 
+  {
+    border: 1px solid #aaa;
+    border-top: 1px solid transparent;
+  }
+    #navbar-top ul.dropdown-menu li
+    {
+      color: #333;
+    }
+    #navbar-top ul.dropdown-menu li:hover
+    {
+      color: #eee;
+    }
+
+  #navbar-top .navbar-header
+  {
+    line-height: 48px;
+    font-size: 20px;
+    padding-left: 48px;
+    font-family: fantasy;
+    color: #eee;
+  }
+ 

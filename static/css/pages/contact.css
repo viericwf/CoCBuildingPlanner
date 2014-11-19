@@ -1,0 +1,42 @@
+
+/*=================================
+        STYLES FOR CONTACT
+===================================*/
+
+.contact-wrap
+{
+	margin-top: 32px;
+	margin-bottom: 64px;
+}
+
+.contact-info-wrap
+{
+	
+	font-size: 1.25em;
+	line-height: 2.25em;
+	font-family: Helvetica,Verdana,"微軟正黑體", "LiHei Pro",sans-serif	
+}
+
+	.contact-info-wrap .email, .contact-info-wrap .phone
+	{
+		margin-left: 32px;
+		font-size: 1em;
+		color: #444;
+	}
+	.contact-info-wrap .email
+	{
+
+	}
+
+.img-wrap
+{
+	border: 1px dashed #ddd;
+	border-radius: 5px;
+}
+	.img-wrap img
+	{
+		max-width: 100%;
+		padding: 5px;
+		border-radius: 5px;
+
+	}

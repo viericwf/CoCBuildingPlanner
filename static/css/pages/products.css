@@ -1,0 +1,89 @@
+
+/*=================================
+        STYLES FOR products
+===================================*/
+
+.product-wrap
+{
+    padding: 12px;
+    /*border-bottom: 1px solid #aaa;*/
+    /*box-shadow: 3px 3px 17px 4px #aaa;*/
+    margin-top: 24px;
+    margin-bottom: 24px;
+}
+
+ul.brand-wrap 
+{
+    /*position: */
+    width: 100%;
+    min-height: 32px;
+    /*background: blue;*/
+    margin: 0;
+    padding: 0;
+    margin-top: 32px;
+    margin-bottom: 32px;
+}
+    ul.brand-wrap li
+    {
+        padding: 5px 0 5px 15px;
+        list-style: none;
+        /*padding: */
+        margin: 0;
+        padding: 0;
+    }
+
+        ul.brand-wrap > li.brand-seleted > a
+        {
+            background-color: #565656;
+            color: #eee;
+        }
+
+        ul.brand-wrap > li > a 
+        {
+
+            /*background-color: orange;*/
+            display: block;
+            width: 100%;
+            line-height: 20px;
+            padding: 10px 20px;
+
+            border-left: 1px solid #ccc;
+            border-right: 1px solid #bbb;
+
+            color: #444;
+        }
+
+        ul.brand-wrap > li:nth-child(1) > a
+        {
+            border-top-right-radius: 5px;
+            border-top-left-radius: 5px;
+            border-top: 1px solid #ccc;
+        }
+
+        ul.brand-wrap > li:nth-last-child(1) > a
+        {
+            border-bottom-right-radius: 5px;
+            border-bottom-left-radius: 5px;
+            border-bottom: 1px solid #bbb;
+        }
+        ul.brand-wrap > li > a:hover
+        {
+            background-color: #444;
+            color: white;
+            /*border-top: 1px solid #999;*/
+        }
+
+    .product-type-wrap
+    {
+
+    }
+        .product-type-wrap li
+        {
+            list-style: none;
+        }
+
+/*        ul.brand-wrap a:hover
+        {
+            cursor: pointer;
+            background-color: black;
+        }*/

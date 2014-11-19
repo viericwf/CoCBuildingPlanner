@@ -1,0 +1,17 @@
+
+/*=================================
+        STYLES FOR ABOUT
+===================================*/
+
+.about-sections-wrap
+{
+  margin-top: 32px;
+  margin-bottom: 32px;
+}
+
+.about-section p.text
+{
+  font-size: 1.25em;
+  line-height: 2.25em;
+  font-family: Helvetica,Verdana,"微軟正黑體", "LiHei Pro",sans-serif
+}

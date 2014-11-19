@@ -1,0 +1,35 @@
+
+/*=================================
+        STYLES FOR INDEX
+===================================*/
+
+div.building-wrap {
+  display:table;
+}
+
+div.building-name, div.building-entry {
+  display:table-row;
+}
+
+.building-name {
+  font-size: 24px;
+  text-align: center;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+.building-wrap {
+  margin: 10px;
+  padding: 24px;
+  border: 2px solid #eee;
+
+}
+
+.building-property {
+  padding: 5px;
+}
+
+div.building-property {
+  display:table-cell;
+  padding-left: 3px;
+}
