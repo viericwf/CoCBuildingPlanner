@@ -119,12 +119,18 @@ def addTime(time,timeInterval):
     return time+timeInterval
 
 def upWorker(nextBuilding,buildings,worker,timeInterval):
-    newWorker=[]
-    sortWorker = sorted(worker)
-    newWorker.append(buildings[nextBuilding[0]][nextBuilding[1]]['time'])
-    for wi in range(1,len(sortWorker)):
-        newWorker.append(sortWorker[wi]-timeInterval)
-    return newWorker
+    """
+    worker: [3, 0, 0, 1, 2]
+    nextBuilding: ('mortar', 1) --> 6
+    timeInterval: 1
+    """
+    W = sorted([0 if w == 0 else max(w-timeInterval, 0) for w in worker])
+    W.pop(0)
+
+    bn, blv = nextBuilding
+    W.append( buildings[bn][blv]['time'] )
+
+    return W
 
 def getMaxInterval(nextBuilding,buildings,maxLoot,loot,earn):
     maxBuildings = [0,0,0]
@@ -236,11 +242,27 @@ def findBest(available,working,buildings,earn,bound):
 #    print 't: ',t
     return available[t.index(min(t))]
 
-def upWorking(working, nextBuilding,building,worker):
-    working=sorted(working,key=lambda x: x[2])
-    working[0]=(nextBuilding[0],nextBuilding[1],buildings[nextBuilding[0]][nextBuilding[1]]['time'])
-    working=sorted(working,key=lambda x: x[2])
-    return working   
+def upWorking(working, nextBuilding, building, worker, timeInterval):
+    """
+    nextBuilding:   ('cannon', 1)
+    buildings:      {'mortar':{'type':'gold',1:{'cost':1600000,'time':6},2:{'cost':3200000,'time':7}}}
+    worker:         [5, 1, 2, 3, 4]
+    working:        [('camp', 1, 1), ('mortar', 2, 2), ('camp', 1, 3), ('cannon', 1, 4), ('camp', 1, 5)]
+
+    working:        [('camp', 1, 0), ('mortar', 2, 1), ('camp', 1, 3), ('cannon', 1, 4), ('camp', 1, 5)]
+
+    working:        [('camp', 1, 0), ('mortar', 2, 0), ('camp', 1, 2), ('cannon', 1, 3), ('camp', 1, 4)]
+    """
+    # update currernt working list
+    new_working = sorted( [(name, lv, 0 if remaining == 0 else max(remaining-timeInterval,0) ) for name, lv, remaining in working], key=lambda x:x[2])
+    new_working.pop(0)
+
+
+    # insert the next building into the working list
+    bn, blv = nextBuilding    
+    new_working.append(( bn, blv, buildings[bn][blv]['time'] ))
+
+    return sorted(new_working, key=lambda x:x[2])
 
 def upNow(working,now):
     working=sorted(working,key=lambda x: x[2])
@@ -268,16 +290,32 @@ def getWaitTime():
     return 1
 
 def waitWorker(waitTime,worker):
-    newWorker=[]
-    for w in worker:
-        newWorker.append(w-waitTime)
-    return newWorker
+    return [ w-waitTime if w-waitTime >= 0 else 0 for w in worker]
 
-def waitWorking(waitTime,working):
-    newWorking=[]
-    for w in working:
-        newWorking.append((w[0],w[1],w[2]-waitTime))
-    return newWorking
+def waitWorking(waitTime, working):
+    """
+    Parameters
+    ==========
+    waitTime: int
+        e.g., 1
+    working: list
+        e.g., [('cannon', 1, 2), ('cannon', 1, 2), ('camp', 1, 2), ('mortar', 1, 3), ('mortar', 1, 3)]
+
+    Returns
+    =======
+    updated working list
+
+    Example
+    =======
+    e.g.,
+        (input) working: [('cannon', 1, 2), ('cannon', 1, 2), ('camp', 1, 2), ('mortar', 1, 3), ('mortar', 1, 3)]
+        (return)         [('cannon', 1, 1), ('cannon', 1, 1), ('camp', 1, 1), ('mortar', 1, 2), ('mortar', 1, 2)]
+    e.g.,
+        (input) working: [('cannon', 1, 0), ('cannon', 1, 0), ('camp', 1, 0), ('mortar', 1, 1), ('mortar', 1, 1)]
+        (return)         [('cannon', 1, 0), ('cannon', 1, 0), ('camp', 1, 0), ('mortar', 1, 0), ('mortar', 1, 0)]
+    """
+    return [(name, level, remaining-waitTime if remaining-waitTime >= 0 else remaining) for name, level, remaining in working]
+
 
 def examinigDone(working,now):
     newNow=dict(now)
@@ -325,8 +363,10 @@ nextBuildings = getNextBuildings(now,working,obj,nextWorker)
 maxCollision = getMaxCollision(nextBuildings,buildings,maxLoot)
 # print 'getMaxCollision: ',maxCollision
 time = 0
+tempTI = 0
 while not finish(now,working,obj):
-    timeInterval = getTimeInterval(nextWorker)
+    timeInterval = getTimeInterval(nextWorker) + tempTI
+    tempTI = timeInterval
     loot = addLoot(loot,earn,timeInterval)
     time = addTime(time,timeInterval)
     minInterval = getMinInterval(nextBuildings,buildings,earn)
@@ -334,33 +374,57 @@ while not finish(now,working,obj):
 #    print 'maxInterval: ',maxInterval,',minInterval: ',minInterval
     available = findAvailable(nextBuildings,buildings,loot,minInterval,maxInterval,maxCollision,worker,working)
 #    print 'available: ',available
+    print '>'*20
+    print 'timeInterval:',timeInterval
+    print 'time:',time
+    print 'tempTI:',tempTI
+
+    print '<'*20
+
     if available:
         if len(available) == 1:
             nextBuilding = available
         else:
             nextBuilding = findBest(available,working,buildings,earn,bound)
-    #    print 'nextBuilding: ',nextBuilding
+    #    
+        print 'nextBuilding:',nextBuilding
         worker = upWorker(nextBuilding,buildings,worker,timeInterval)
-    #    print 'worker: ',worker
+        # print 'worker:',worker
+
         now = upNow(working,now)
-    #    print 'now: ',now
-        working = upWorking(working, nextBuilding,buildings,worker)
-    #    print 'working: ',working
-        sortedWorker = sorted(worker)
-        nextWorker = sortedWorker[0]
+        print 'now:',now
+
+        print '>> working', working
+        working = upWorking(working, nextBuilding,buildings,worker, timeInterval)
+        print '<< working:',working
+
         require=getRequire(nextBuilding,buildings,loot)
-        print 'time: ',time,', Start build: ',nextBuilding[0],', level: ',nextBuilding[1],', require: ',buildings[nextBuilding[0]][nextBuilding[1]]['cost'],' ',buildings[nextBuilding[0]]['type'],', require per day: ',[require[0]/timeInterval,require[1]/timeInterval,require[2]/timeInterval]
+        
+        bn, blv = nextBuilding
+        print 'Start build:',bn
+        print 'level:',blv
+        print 'require:',buildings[bn][blv]['cost'],' ',buildings[bn]['type']
+        try:
+            print 'require per day:',[require[0]/timeInterval,require[1]/timeInterval,require[2]/timeInterval]
+        except ZeroDivisionError:
+            print 'wtf'
+        tempTI = 0
     else:
         waitTime=getWaitTime()
         worker=waitWorker(waitTime,worker)
+
         working=waitWorking(waitTime,working)
+
         now=examinigDone(working,now)
-        sortedWorker = sorted(worker)
-        nextWorker = sortedWorker[0]
-        # print 'else'
+        print 'else'
         # no available building waiting resourse 
         # TBD
-    print 'working: ',working
+
+    print 'worker:',worker
+    sortedWorker = sorted(worker)
+    nextWorker = sortedWorker[0]
+    
+    # print 'working: ',working
     raw_input()
 
 print 'Done!'
