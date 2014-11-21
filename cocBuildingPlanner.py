@@ -408,16 +408,18 @@ def updater(now, working, worker, nextBuilding, buildings, pausedTime):
     working = filter(lambda x:x[2] > 0, working)
 
     # 3.1 lookup next remaining
-    next_name, next_level = nextBuilding
-    next_remaining = buildings[next_name][next_level]['time']
+    if nextBuilding:
+        next_name, next_level = nextBuilding
+        next_remaining = buildings[next_name][next_level]['time']
 
     # 3.2 add `nextBuilding`
-    working.append( (next_name, next_level, next_remaining) )
+        working.append( (next_name, next_level, next_remaining) )
     # print 'Add (',next_name, next_level, next_remaining,') :',working
 
     ## update worker
-    worker = map(lambda x:x[2], working)
-    # worker = lambda x:max(x[2]-pausedTime,0), working    
+#    worker = map(lambda x:x[2], working)
+    worker = map(lambda x:x[2], working) + [0]*(len(worker)-len(working))
+
 
     return (now, working, worker)
 
@@ -431,7 +433,7 @@ if __name__ == '__main__':
     # print 'getMaxCollision: ',maxCollision
     time = 0
     tempTI = 0
-    while True:
+    while finish(now, working, obj) != True:
 
         timeInterval = getTimeInterval(nextWorker) + tempTI
         tempTI = timeInterval
@@ -472,14 +474,16 @@ if __name__ == '__main__':
             print 'Start build:',bn
             print 'level:',blv
             print 'require:',buildings[bn][blv]['cost'],' ',buildings[bn]['type']
+            pausedTime=timeInterval
             try:
-                print 'require per day:',[require[0]/timeInterval,require[1]/timeInterval,require[2]/timeInterval]
+                print 'require per day:',[require[0]/pausedTime,require[1]/pausedTime,require[2]/pausedTime]
             except ZeroDivisionError:
                 print 'wtf'
             tempTI = 0
-            pausedTime=timeInterval
         else:
-            pausedTime=getPausedTime(pausedTime)
+            nextBuilding=[]
+            pausedTime=getPausedTime(tempTI)
+            tempTI = 0
     #        worker=waitWorker(waitTime,worker)
 
     #        working=waitWorking(waitTime,working)
@@ -503,8 +507,8 @@ if __name__ == '__main__':
         nextWorker = sortedWorker[0]
         
         # print 'working: ',working
-        finished = finish(now, working, obj)
-        print 'finished' if finished else 'Not yet...'
+#        finished = finish(now, working, obj)
+#        print 'finished' if finished else 'Not yet...'
         raw_input()
 
     print 'Done!'
