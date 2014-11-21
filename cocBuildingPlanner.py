@@ -88,21 +88,21 @@ def getMaxCollision(nextBuildings,buildings,maxLoot):
                 minBuildings[5]=bCost
     return [math.floor(maxLoot['gold']/(minBuildings[0]+minBuildings[1])),math.floor(maxLoot['elixir']/(minBuildings[2]+minBuildings[3])),math.floor(maxLoot['dark_elixir']/(minBuildings[4]+minBuildings[5]))]
 
-def finish(now,working,obj):
-    keys=obj.keys()
-    #keys denote all objective buildings
+def finish(now, working, obj):
+    keys = obj.keys()
+    # keys denote all objective buildings
     for k in keys:
         if now.has_key(k):
-            total=list(now[k])
+            total = list(now[k])
         for w in working:
-            if w[0] is k:
+            if w[0] == k:
                 for i in range(len(total)):
-                    if total[i] is w[1]-1 and w[2] is nextWorker:
-                        total[i]=total[i]+1
+                    if total[i] == w[1]-1 and w[2] == nextWorker:
+                        total[i] = total[i]+1
                         break
-                    elif total[i] is w[1]-1:
-                        total[i]=total[i]+999
-        if total is not obj[k]:
+                    elif total[i] == w[1]-1:
+                        total[i] = total[i]+999
+        if total != obj[k]:
             return False
     return True
 
@@ -384,8 +384,7 @@ def updater(now, working, worker, nextBuilding, buildings, pausedTime):
     working: [('camp',1,1), ('mortar',2,2), ('camp',1,3), ('camp',1,4)]
      
     > add ('cannon', 1, ?)  ## ? is obtained from `buildings.json`
-    working: [('camp',1,1), ('mortar',2,2), ('camp',1,3), ('camp',1,4), ('cannon', 1, 1)]
-
+    working: [('camp',1,1), ('mortar',2,2), ('camp',1,3), ('camp',1,4), ('cannon', 1, 5)]
     """
     ## update `now`
     for name, level, remaining in filter(lambda x:max(x[2]-pausedTime,0) == 0, working):
@@ -399,10 +398,13 @@ def updater(now, working, worker, nextBuilding, buildings, pausedTime):
 
     ## update `working`
     # 1. subtract `pausedTime`
+    # print 'previous working:', working
     working = [ (name, level, max(remaining - pausedTime ,0) ) for name, level, remaining in working ]
+    # print 'subtract',pausedTime,'to:', working
 
     # 2. emit element(s) with zero remaining day, i.e., `completed`
-    completed = filter(lambda x:x[2] == 0, working)
+    # completed = filter(lambda x:x[2] == 0, working)
+    # print 'filter completed ones out:', working
     working = filter(lambda x:x[2] > 0, working)
 
     # 3.1 lookup next remaining
@@ -411,14 +413,13 @@ def updater(now, working, worker, nextBuilding, buildings, pausedTime):
 
     # 3.2 add `nextBuilding`
     working.append( (next_name, next_level, next_remaining) )
-
-
+    # print 'Add (',next_name, next_level, next_remaining,') :',working
 
     ## update worker
+    worker = map(lambda x:x[2], working)
     # worker = lambda x:max(x[2]-pausedTime,0), working    
 
-    # return 
-
+    return (now, working, worker)
 
 
 
@@ -430,7 +431,8 @@ if __name__ == '__main__':
     # print 'getMaxCollision: ',maxCollision
     time = 0
     tempTI = 0
-    while not finish(now,working,obj):
+    while True:
+
         timeInterval = getTimeInterval(nextWorker) + tempTI
         tempTI = timeInterval
         loot = addLoot(loot,earn,timeInterval)
@@ -491,7 +493,7 @@ if __name__ == '__main__':
         print 'working:',working
         print 'now:',now
         print '============'
-        updater(now, working, worker, nextBuilding, buildings, pausedTime)
+        now, working, worker = updater(now, working, worker, nextBuilding, buildings, pausedTime)
         print '===after==='
         print 'worker:',worker
         print 'working:',working
@@ -501,6 +503,8 @@ if __name__ == '__main__':
         nextWorker = sortedWorker[0]
         
         # print 'working: ',working
+        finished = finish(now, working, obj)
+        print 'finished' if finished else 'Not yet...'
         raw_input()
 
     print 'Done!'
