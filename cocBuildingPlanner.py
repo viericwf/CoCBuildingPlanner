@@ -38,24 +38,24 @@ def getNextBuildings(now,working,obj,nextWorker):
 #    print 'keys: ',keys
     for k in keys:
         if now.has_key(k):
-            total=now[k]
+            total=list(now[k])
         for w in working:
-            if w[0] is k:
+            if w[0] == k:
                 for i in range(len(total)):
-                    if total[i] is w[1]-1 and w[2] is nextWorker:
+                    if total[i] == w[1]-1:
                         total[i]=total[i]+1
                         break
 #                    elif total[i] is w[1]-1:
 #                        total[i]=total[i]+999
         if obj.has_key(k):
-            if total is not obj[k]:
+            if total != obj[k]:
                 objLevels=[]
                 nowLevels=[]
                 sortTotal=sorted(total,reverse=True)
                 sortObj=sorted(obj[k],reverse=True)
 #                print 'before: ',k,': nowLevels: ',sortTotal,' objLevels: ',sortObj
                 for i in range(len(sortObj)):
-                    if sortTotal[len(sortTotal)-1] is sortObj[len(sortObj)-1]:
+                    if sortTotal[len(sortTotal)-1] == sortObj[len(sortObj)-1]:
                         sortTotal.pop()
                         sortObj.pop()
                     else:
@@ -199,7 +199,10 @@ def findAvailable(nextBuildings,buildings,loot,minInterval,maxInterval,maxCollis
 def getInterval(bTime,working,buildings,bType):
     working=sorted(working,key=lambda x: x[2])
     newWorker=[]
-    nextWorker=working[0][2]+bTime
+    if not working:
+        nextWorker = 0+bTime
+    else:
+        nextWorker=working[0][2]+bTime
     interval=999
     #sort by time remaining
     for w in range(1,len(working)):
@@ -278,16 +281,16 @@ def upNow(working,now):
 
 def getRequire(nextBuilding,buildings,loot):
     require = [0,0,0]
-    if buildings[nextBuilding[0]]['type'] is 'gold':
-        require[0] = max(0,loot['gold']-buildings[nextBuilding[0]][nextBuilding[1]]['cost'])
-    if buildings[nextBuilding[0]]['type'] is 'elixir':
-        require[1] = max(0,loot['elixir']-buildings[nextBuilding[0]][nextBuilding[1]]['cost'])
-    if buildings[nextBuilding[0]]['type'] is 'gold':
-        require[2] = max(0,loot['dark_elixir']-buildings[nextBuilding[0]][nextBuilding[1]]['cost'])
+    if buildings[nextBuilding[0]]['type'] == 'gold':
+        require[0] = min(0,-buildings[nextBuilding[0]][nextBuilding[1]]['cost']+loot['gold'])
+    if buildings[nextBuilding[0]]['type'] == 'elixir':
+        require[1] = min(0,-buildings[nextBuilding[0]][nextBuilding[1]]['cost']+loot['elixir'])
+    if buildings[nextBuilding[0]]['type'] == 'dark_elixir':
+        require[2] = min(0,-buildings[nextBuilding[0]][nextBuilding[1]]['cost']+loot['dark_elixir'])
     return require
 
-def getPausedTime(pausedTime):
-    return 1+pausedTime
+def getPausedTime():
+    return 1
 
 def waitWorker(waitTime,worker):
     return [ w-waitTime if w-waitTime >= 0 else 0 for w in worker]
@@ -351,8 +354,11 @@ def update_level(current_levels, new_level):
     update_level([0,1,2,3], 2): [0, 2, 2, 3]
     """
     try:
-        idx = current_levels.index(new_level-1)
-        current_levels[idx] = new_level
+        if new_level == 1 and 0 not in current_levels:
+            current_levels.append(1)
+        else:
+            idx = current_levels.index(new_level-1)
+            current_levels[idx] = new_level
     except ValueError:
         # new_level-1 is not in the current_levels
         pass
@@ -388,6 +394,7 @@ def updater(now, working, worker, nextBuilding, buildings, pausedTime):
     """
     ## update `now`
     for name, level, remaining in filter(lambda x:max(x[2]-pausedTime,0) == 0, working):
+        print 'finished:',name,level
         # create value
         if name not in now:
             now[name] = [level]
@@ -419,11 +426,15 @@ def updater(now, working, worker, nextBuilding, buildings, pausedTime):
     ## update worker
 #    worker = map(lambda x:x[2], working)
     worker = map(lambda x:x[2], working) + [0]*(len(worker)-len(working))
-
-
     return (now, working, worker)
 
-
+def getNewLoot(loot,nextBuilding,buildings):
+    newLoot = loot
+#    print 'next:',nextBuilding
+#    print 'type:',buildings[nextBuilding[0]]['type']
+#    print 'cost:',buildings[nextBuilding[0]][nextBuilding[1]]['cost']
+    newLoot[buildings[nextBuilding[0]]['type']] = newLoot[buildings[nextBuilding[0]]['type']] - buildings[nextBuilding[0]][nextBuilding[1]]['cost']
+    return newLoot
 
 if __name__ == '__main__':
     
@@ -433,12 +444,12 @@ if __name__ == '__main__':
     # print 'getMaxCollision: ',maxCollision
     time = 0
     tempTI = 0
-    while finish(now, working, obj) != True:
-
-        timeInterval = getTimeInterval(nextWorker) + tempTI
-        tempTI = timeInterval
+    pausedTime = 0
+    while nextBuildings:
+#        print 'unfinished:',nextBuildings
+        timeInterval = getTimeInterval(nextWorker)
         loot = addLoot(loot,earn,timeInterval)
-        time = addTime(time,timeInterval)
+        time = addTime(time,timeInterval+pausedTime)
         minInterval = getMinInterval(nextBuildings,buildings,earn)
         maxInterval = getMaxInterval(nextBuildings,buildings,maxLoot,loot,earn)
     #    print 'maxInterval: ',maxInterval,',minInterval: ',minInterval
@@ -453,7 +464,7 @@ if __name__ == '__main__':
 
         if available:
             if len(available) == 1:
-                nextBuilding = available
+                nextBuilding = available[0]
             else:
                 nextBuilding = findBest(available,working,buildings,earn,bound)
         #    
@@ -467,23 +478,30 @@ if __name__ == '__main__':
     #        print '>> working', working
     #        working = upWorking(working, nextBuilding,buildings,worker, timeInterval)
     #        print '<< working:',working
-
-            require=getRequire(nextBuilding,buildings,loot)
-            
+            oldloot = addLoot(loot,earn,-timeInterval)
+            loot = getNewLoot(loot,nextBuilding,buildings)
+            require=getRequire(nextBuilding,buildings,oldloot)
+                    
             bn, blv = nextBuilding
+            print 'time:',time
             print 'Start build:',bn
             print 'level:',blv
             print 'require:',buildings[bn][blv]['cost'],' ',buildings[bn]['type']
             pausedTime=timeInterval
-            try:
-                print 'require per day:',[require[0]/pausedTime,require[1]/pausedTime,require[2]/pausedTime]
-            except ZeroDivisionError:
-                print 'wtf'
-            tempTI = 0
+#            print '???:',pausedTime+tempTI
+#            print '??:',require[0]
+#            print '?:',oldloot
+#            try:
+#                print 'require per day:',[require[0]/(pausedTime+tempTI),require[1]/(pausedTime+tempTI),require[2]/(pausedTime+tempTI)]
+#            except ZeroDivisionError:
+#                print 'wtf'
+#            tempTI = 0
         else:
             nextBuilding=[]
-            pausedTime=getPausedTime(tempTI)
-            tempTI = 0
+            pausedTime=getPausedTime()
+            loot = addLoot(loot,earn,pausedTime)
+            oldloot = addLoot(loot,earn,-pausedTime)
+#            tempTI = pausedTime
     #        worker=waitWorker(waitTime,worker)
 
     #        working=waitWorking(waitTime,working)
@@ -492,19 +510,23 @@ if __name__ == '__main__':
     #        print 'else'
             # no available building waiting resourse 
             # TBD
-        print '===before==='
-        print 'worker:',worker
-        print 'working:',working
-        print 'now:',now
-        print '============'
+#        print '===before==='
+#        print 'worker:',worker
+#        print 'working:',working
+#        print 'now:',now
+#        print 'loot:',oldloot
+#        print '============'
         now, working, worker = updater(now, working, worker, nextBuilding, buildings, pausedTime)
-        print '===after==='
-        print 'worker:',worker
-        print 'working:',working
-        print 'now:',now
-        print '============'
+#        print 'time passed:',pausedTime
+#        print '===after==='
+#        print 'worker:',worker
+#        print 'working:',working
+#        print 'now:',now
+        print 'loot,',loot
+#        print '============'
         sortedWorker = sorted(worker)
         nextWorker = sortedWorker[0]
+        nextBuildings = getNextBuildings(now,working,obj,nextWorker)
         
         # print 'working: ',working
 #        finished = finish(now, working, obj)
